@@ -1,34 +1,107 @@
 <link rel="import" href="../polymer/polymer.html">
 
+<link rel="import" href="../oc-edit-option/oc-edit-option.html">
+<link rel="import" href="../oc-product-library-api/oc-product-library-api.html">
+
 <!--
 `oc-edit-library-option`
-Component to edit a single product library option on the Orderloud platform
+Element for editing a local option
 
-@demo demo/index.html 
+@demo demo/index.html
 -->
 
 <dom-module id="oc-edit-library-option">
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
+
   <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
-    <h2>Hello [[prop1]]</h2>
+    <oc-product-library-api id="prodLibApi"></oc-product-library-api>
+    <oc-edit-option
+            id="optionEditor"
+            option-sets-items="[[ _items ]]"
+            option-sets-total-items="[[ _totalItems ]]"
+            option-sets-page-size="[[ _pageSize ]]"
+            option-sets-current-page="[[ _currentPage ]]"
+            on-unlock-option-sets-page-changed="_optionSetsPageChanged"
+            on-add-unlock-option-set="_addUnlockOptionSet"
+            on-remove-unlock-option-set="_removeUnlockOptionSet"
+            on-save="_onSave"
+    ></oc-edit-option>
   </template>
 
   <script>
     Polymer({
-
       is: 'oc-edit-library-option',
 
       properties: {
-        prop1: {
-          type: String,
-          value: 'oc-edit-library-option',
-        },
+        organisationId: Number,
+        optionId: Number,
+        loading: {
+          type: Boolean,
+          notify: true
+        }
       },
 
+      observers: [
+        'refresh(organisationId, optionId)'
+      ],
+
+      refresh: function() {
+        if (this.organisationId && this.optionId) {
+          this.loading = true;
+          this._getOption();
+        }
+      },
+
+      _optionSetsPageChanged: function(event) {
+        this._getOptionSets(event.detail.detail.page, event.detail.detail.range);
+      },
+
+      _getOptionSets: function(page, pageSize) {
+        this.$.prodLibApi.getProductOptionSets(page, pageSize)
+                .then(function(request) {
+                  this._items = request.response.results;
+                  this._totalItems = request.response.count;
+                  this._currentPage = page;
+                  this._pageSize = pageSize;
+                }.bind(this))
+                .catch(this.fire.bind(this, 'option-set-error', 'Failed to load option sets'))
+                .finally(this.set.bind(this, 'loading', false));
+      },
+
+      _getOption: function() {
+        this.$.prodLibApi.getProductOption(this.optionId)
+                .then(function(request) {
+                  this.$.optionEditor.setOption(request.response);
+                  this._getOptionSets(1, 100);
+                }.bind(this))
+                .catch(this.fire.bind(this, 'option-error', 'Could not load option'));
+      },
+
+      _addUnlockOptionSet: function(event) {
+        this.$.prodLibApi.addUnlockOptionSet(this.optionId, event.detail.id)
+                .catch(this.fire.bind(this, 'option-error', 'Could not add unlock option set'))
+      },
+
+      _removeUnlockOptionSet: function(event) {
+        this.$.prodLibApi.removeUnlockOptionSet(this.optionId, event.detail.id)
+                .catch(this.fire.bind(this, 'option-error', 'Could not add unlock option set'))
+      },
+
+      _onSave: function(event) {
+        this.loading = true;
+        this.$.prodLibApi.updateOption(event.detail.id, {
+          name: event.detail.name,
+          description: event.detail.description,
+          price: event.detail.price,
+          setId: event.detail.setId,
+          itemsPluFlatMappingEnabled: event.itemsPluFlatMappingEnabled})
+                .catch(this.fire.bind(this, 'option-error', 'Could not load option'))
+                .finally(this.set.bind(this, 'loading', false));
+      }
     });
   </script>
 </dom-module>
