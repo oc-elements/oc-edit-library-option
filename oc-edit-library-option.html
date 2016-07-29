@@ -1,0 +1,34 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<!--
+`oc-edit-library-option`
+Component to edit a single product library option on the Orderloud platform
+
+@demo demo/index.html 
+-->
+
+<dom-module id="oc-edit-library-option">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <h2>Hello [[prop1]]</h2>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'oc-edit-library-option',
+
+      properties: {
+        prop1: {
+          type: String,
+          value: 'oc-edit-library-option',
+        },
+      },
+
+    });
+  </script>
+</dom-module>
