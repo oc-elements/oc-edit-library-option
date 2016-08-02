@@ -42,7 +42,8 @@ Element for editing a local option
         loading: {
           type: Boolean,
           notify: true
-        }
+        },
+        _items: Array
       },
 
       observers: [
@@ -98,7 +99,7 @@ Element for editing a local option
           description: event.detail.description,
           price: event.detail.price,
           setId: event.detail.setId,
-          itemsPluFlatMappingEnabled: event.itemsPluFlatMappingEnabled})
+          itemsPluFlatMappingEnabled: event.detail.itemsPluFlatMappingEnabled})
                 .catch(this.fire.bind(this, 'option-error', 'Could not load option'))
                 .finally(this.set.bind(this, 'loading', false));
       }
